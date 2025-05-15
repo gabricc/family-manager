@@ -1,40 +1,65 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FamilyManager = void 0;
-const family_1 = require("./family");
+const prisma_1 = require("../../generated/prisma");
 class FamilyManager {
     constructor() {
-        this.families = [];
+        this.prisma = new prisma_1.PrismaClient();
     }
     createFamily(name, hasDogs, memberNames) {
-        const family = new family_1.Family(family_1.Family.generateId(), name, (memberNames === null || memberNames === void 0 ? void 0 : memberNames.split(',').length) || 0, hasDogs, memberNames);
-        this.families.push(family);
+        return __awaiter(this, void 0, void 0, function* () {
+            const membersCount = (memberNames === null || memberNames === void 0 ? void 0 : memberNames.split(',').length) || 0;
+            return this.prisma.family.create({
+                data: {
+                    name,
+                    hasDogs: hasDogs || false,
+                    memberNames,
+                    membersCount,
+                    createdAt: new Date()
+                }
+            });
+        });
     }
     deleteFamily(id) {
-        this.families = this.families.filter(family => family.id !== id);
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.prisma.family.delete({
+                where: { id }
+            });
+        });
     }
-    updateFamily(item, value) {
-        this.families.forEach(family => {
-            switch (item) {
-                case "name":
-                    family.name = value;
-                    break;
-                case "membersCount":
-                    family.membersCount = parseInt(value);
-                    break;
-                case "hasDogs":
-                    family.hasDogs = Boolean(value);
-                    break;
-                case "memberNames":
-                    family.memberNames = value;
-                    break;
-                default:
-                    break;
+    updateFamily(id, updates) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = Object.assign({}, updates);
+            // If memberNames is being updated, recalculate membersCount
+            if (updates.memberNames) {
+                data.membersCount = updates.memberNames.split(',').length;
             }
+            return this.prisma.family.update({
+                where: { id },
+                data
+            });
         });
     }
     listFamilies() {
-        return this.families.map(family => family.listAllFamilies());
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.prisma.family.findMany();
+        });
+    }
+    getFamilyById(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.prisma.family.findUnique({
+                where: { id }
+            });
+        });
     }
 }
 exports.FamilyManager = FamilyManager;
